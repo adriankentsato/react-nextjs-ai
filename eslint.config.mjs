@@ -1,63 +1,77 @@
-import { defineConfig, globalIgnores } from 'eslint/config';
-import nextVitals from 'eslint-config-next/core-web-vitals';
-import nextTs from 'eslint-config-next/typescript';
-import prettierPlugin from 'eslint-plugin-prettier';
+import js from '@eslint/js';
+import typescript from '@typescript-eslint/eslint-plugin';
+import typescriptParser from '@typescript-eslint/parser';
+import prettier from 'eslint-plugin-prettier';
+import prettierConfig from 'eslint-config-prettier';
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
+const eslintConfig = [
+  js.configs.recommended,
   {
-    // Prettier configuration
-    plugins: {
-      prettier: prettierPlugin,
-    },
-    rules: {
-      'prettier/prettier': 'error',
-    },
-  },
-  {
-    // Airbnb style guide configuration
-    rules: {
-      // React specific rules
-      'react/jsx-filename-extension': [
-        1,
-        { extensions: ['.js', '.jsx', '.ts', '.tsx'] },
-      ],
-      'react/react-in-jsx-scope': 'off', // Not needed in Next.js with React 17+
-      'react/prop-types': 'off', // Using TypeScript for prop validation
-      'react/jsx-props-no-spreading': 'off', // Allow spreading props
-      'react/jsx-boolean-value': ['error', 'never'],
-      'react/jsx-closing-bracket-location': ['error', 'line-aligned'],
-      'react/jsx-first-prop-new-line': ['error', 'multiline'],
-      'react/jsx-indent': ['error', 2],
-      'react/jsx-indent-props': ['error', 2],
-      'react/jsx-max-props-per-line': [
-        'error',
-        { maximum: 1, when: 'multiline' },
-      ],
-      'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
-
-      // General JavaScript/TypeScript rules
-      indent: ['error', 2, { SwitchCase: 1 }],
-      quotes: ['error', 'single'],
-      semi: ['error', 'always'],
-      'comma-dangle': ['error', 'always-multiline'],
-      'object-curly-spacing': ['error', 'always'],
-      'array-bracket-spacing': ['error', 'never'],
-      'space-before-function-paren': [
-        'error',
-        {
-          anonymous: 'always',
-          named: 'never',
-          asyncArrow: 'always',
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
         },
-      ],
-      'no-console': 'warn',
-      'no-debugger': 'error',
-      'prefer-const': 'error',
-      'no-var': 'error',
-
-      // Allow unused parameters in functions that throw "not implemented" errors
+      },
+      globals: {
+        // Node.js globals
+        console: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+        exports: 'readonly',
+        global: 'readonly',
+        
+        // Browser globals
+        window: 'readonly',
+        document: 'readonly',
+        navigator: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        fetch: 'readonly',
+        Response: 'readonly',
+        Request: 'readonly',
+        Headers: 'readonly',
+        
+        // React
+        React: 'readonly',
+        
+        // Web APIs
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        
+        // IndexedDB
+        indexedDB: 'readonly',
+        IDBDatabase: 'readonly',
+        IDBTransaction: 'readonly',
+        IDBObjectStore: 'readonly',
+        IDBIndex: 'readonly',
+        IDBRequest: 'readonly',
+        IDBOpenDBRequest: 'readonly',
+        IDBKeyRange: 'readonly',
+        IDBCursor: 'readonly',
+        IDBValidKey: 'readonly',
+        IDBIndexParameters: 'readonly',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': typescript,
+      prettier: prettier,
+    },
+    rules: {
+      ...typescript.configs.recommended.rules,
+      'prettier/prettier': 'error',
+      
+      // TypeScript specific rules
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -66,33 +80,37 @@ const eslintConfig = defineConfig([
           caughtErrorsIgnorePattern: '^_',
         },
       ],
-
-      // Import rules
-      'import/order': [
-        'error',
-        {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-          ],
-          'newlines-between': 'always',
-        },
-      ],
-      'import/no-unresolved': 'off', // TypeScript handles this
+      '@typescript-eslint/no-explicit-any': 'warn',
+      
+      // General JavaScript/TypeScript rules
+      'no-console': 'warn',
+      'no-debugger': 'error',
+      'prefer-const': 'error',
+      'no-var': 'error',
+      
+      // React specific rules
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
     },
   },
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    '.next/**',
-    'out/**',
-    'build/**',
-    'next-env.d.ts',
-  ]),
-]);
+  prettierConfig,
+  {
+    ignores: [
+      '.next/**',
+      'out/**',
+      'build/**',
+      'next-env.d.ts',
+      'node_modules/**',
+      'dist/**',
+      'coverage/**',
+      'logs/**',
+    ],
+  },
+];
 
 export default eslintConfig;
