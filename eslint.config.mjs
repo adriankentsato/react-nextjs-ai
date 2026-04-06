@@ -28,7 +28,7 @@ const eslintConfig = [
         require: 'readonly',
         exports: 'readonly',
         global: 'readonly',
-        
+
         // Browser globals
         window: 'readonly',
         document: 'readonly',
@@ -39,16 +39,16 @@ const eslintConfig = [
         Response: 'readonly',
         Request: 'readonly',
         Headers: 'readonly',
-        
+
         // React
         React: 'readonly',
-        
+
         // Web APIs
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
         setInterval: 'readonly',
         clearInterval: 'readonly',
-        
+
         // IndexedDB
         indexedDB: 'readonly',
         IDBDatabase: 'readonly',
@@ -70,7 +70,7 @@ const eslintConfig = [
     rules: {
       ...typescript.configs.recommended.rules,
       'prettier/prettier': 'error',
-      
+
       // TypeScript specific rules
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -81,13 +81,13 @@ const eslintConfig = [
         },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
-      
+
       // General JavaScript/TypeScript rules
       'no-console': 'warn',
       'no-debugger': 'error',
       'prefer-const': 'error',
       'no-var': 'error',
-      
+
       // React specific rules
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
