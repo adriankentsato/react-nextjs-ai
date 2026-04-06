@@ -24,25 +24,29 @@ This project uses **Airbnb style guidelines** with ESLint and Prettier for consi
 This project uses **Winston** for structured logging with the following features:
 
 ### Log Levels
+
 - `logInfo()` - General information messages
-- `logWarn()` - Warning messages  
+- `logWarn()` - Warning messages
 - `logError()` - Error messages with stack traces
 - `logDebug()` - Debug messages (development only)
 
 ### Log Destinations
+
 - **Console**: Colorized output for development
 - **Files**: Daily rotating log files in `logs/` directory
   - `logs/application-YYYY-MM-DD.log` - All logs (info, warn, error)
   - `logs/error-YYYY-MM-DD.log` - Error logs only
 
 ### File Rotation
+
 - **Frequency**: Daily rotation at midnight
-- **Retention**: 
+- **Retention**:
   - Application logs: 14 days
   - Error logs: 30 days
 - **Max file size**: 20MB per file
 
 ### Usage Examples
+
 ```typescript
 import { logInfo, logError, logWarn } from './lib/logger';
 
@@ -65,6 +69,7 @@ logWarn('Deprecated API endpoint used', { endpoint: '/old-api' });
 ## VS Code Integration
 
 For the best experience, install these VS Code extensions:
+
 - ESLint
 - Prettier - Code formatter
 
