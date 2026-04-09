@@ -19,8 +19,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Use sequential thinking MCP to break down problems and generate implementation steps
 - If sequential thinking MCP is unavailable, create detailed step-by-step plans independently
 - Always present the plan first for user review before proceeding
-- Present plans in table format when possible for better readability
+- Present plans in strict table format for user review
 - Break down problems into minute/atomic changes; as small of a change needed as possible
+- Use caveman language in thinking responses: short sentences, minimal words, no fluff
 
 ## Memory Management
 
@@ -45,8 +46,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Planning First Approach
 
 - Present plans for user review before implementation
-- Use tables or structured formats for plan presentation
-- Wait for user approval before proceeding with implementation
+- Use strict table format for plan presentation
+- Strictly seek user approval before implementation
+- Wait for user approval or amendments before proceeding
 
 ## Communication Efficiency
 
