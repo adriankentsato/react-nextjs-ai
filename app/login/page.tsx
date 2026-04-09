@@ -1,47 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
+
+function buildSuggestedUsername(email: string): string {
+  const emailPrefix = email.split('@')[0]?.trim().toLowerCase() ?? '';
+
+  const sanitizedPrefix = emailPrefix
+    .replace(/[^a-z0-9._-]+/g, '.')
+    .replace(/^[._-]+|[._-]+$/g, '')
+    .replace(/[._-]{2,}/g, '.');
+
+  return sanitizedPrefix || 'newuser';
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [fullName, setFullName] = useState('');
+  const [accountEmail, setAccountEmail] = useState('');
+  const [preferredUsername, setPreferredUsername] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
+  const [hasCustomUsername, setHasCustomUsername] = useState(false);
 
-  /**
-   * Handle login form submission
-   * Stub function - implementation to be added later
-   */
-  function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+  function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    console.log('Login attempt:', { email, password });
-    // Implementation to be added
   }
 
-  /**
-   * Handle create account button click
-   * Stub function - implementation to be added later
-   */
   function handleCreateAccount() {
-    console.log('Create account clicked');
-    // Implementation to be added
+    setIsCreatingAccount(true);
+
+    // Only pre-fill email if there's one from the login form
+    if (email && !accountEmail) {
+      setAccountEmail(email);
+      if (!hasCustomUsername) {
+        setPreferredUsername(buildSuggestedUsername(email));
+      }
+    }
   }
 
-  /**
-   * Handle forgot password link click
-   * Stub function - implementation to be added later
-   */
-  function handleForgotPassword() {
-    console.log('Forgot password clicked');
-    // Implementation to be added
+  function handleBackToLogin() {
+    setIsCreatingAccount(false);
+  }
+
+  function handleForgotPassword() {}
+
+  function handleAccountCreation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+  }
+
+  function handleAccountEmailChange(event: ChangeEvent<HTMLInputElement>) {
+    const nextEmail = event.target.value;
+    const currentSuggestion = buildSuggestedUsername(accountEmail);
+    const nextSuggestion = buildSuggestedUsername(nextEmail);
+
+    setAccountEmail(nextEmail);
+
+    if (!hasCustomUsername || preferredUsername === currentSuggestion) {
+      setPreferredUsername(nextSuggestion);
+      setHasCustomUsername(false);
+    }
+  }
+
+  function handlePreferredUsernameChange(event: ChangeEvent<HTMLInputElement>) {
+    const nextUsername = event.target.value;
+    const suggestedUsername = buildSuggestedUsername(accountEmail);
+
+    setPreferredUsername(nextUsername);
+    setHasCustomUsername(
+      nextUsername.trim().length > 0 && nextUsername !== suggestedUsername,
+    );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-100 via-white to-blue-50 px-4 py-10">
+      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/70">
+        <div className="mb-8 flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-200">
             <svg
-              className="w-10 h-10 text-white"
+              className="h-10 w-10 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -57,74 +94,186 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Login Form */}
-        <form onSubmit={handleLogin} className="space-y-6">
-          {/* Email Input */}
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter your email"
-            />
-          </div>
-
-          {/* Password Input */}
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter your password"
-            />
-          </div>
-
-          {/* Login Button */}
-          <button
-            type="submit"
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Login
-          </button>
-
-          {/* Create Account Button */}
-          <button
-            type="button"
-            onClick={handleCreateAccount}
-            className="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-          >
-            Create Account
-          </button>
-        </form>
-
-        {/* Forgot Password Link */}
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            onClick={handleForgotPassword}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium focus:outline-none focus:underline"
-          >
-            Forgot password?
-          </button>
+        <div className="mb-8 space-y-2 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+            Welcome
+          </p>
+          <h1 className="text-3xl font-semibold text-slate-900">
+            {isCreatingAccount
+              ? 'Create your account'
+              : 'Login to your account'}
+          </h1>
+          <p className="text-sm leading-6 text-slate-500">
+            {isCreatingAccount
+              ? 'Start with your basic details. You can adjust the suggested username before you continue.'
+              : 'Use your email and password to access your account.'}
+          </p>
         </div>
+
+        {isCreatingAccount ? (
+          <form onSubmit={handleAccountCreation} className="space-y-5">
+            <div>
+              <label
+                htmlFor="fullName"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Name
+              </label>
+              <input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={event => setFullName(event.target.value)}
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-black outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                placeholder="Enter your full name"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="accountEmail"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Email
+              </label>
+              <input
+                id="accountEmail"
+                type="email"
+                value={accountEmail}
+                onChange={handleAccountEmailChange}
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-black outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                placeholder="Enter your email"
+              />
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <label
+                  htmlFor="preferredUsername"
+                  className="block text-sm font-medium text-slate-700"
+                >
+                  Preferred username
+                </label>
+                <span className="text-xs font-medium text-blue-600">
+                  Suggested from email
+                </span>
+              </div>
+              <input
+                id="preferredUsername"
+                type="text"
+                value={preferredUsername}
+                onChange={handlePreferredUsernameChange}
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-black outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                placeholder="Choose a username"
+              />
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                Tip: change the email above and the suggestion updates until you
+                customize this field.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="accountPassword"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Password
+              </label>
+              <input
+                id="accountPassword"
+                type="password"
+                value={accountPassword}
+                onChange={event => setAccountPassword(event.target.value)}
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-black outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                placeholder="Create a password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Create Account
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBackToLogin}
+              className="w-full rounded-xl border border-slate-200 px-4 py-3 font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+            >
+              Back to Login
+            </button>
+          </form>
+        ) : (
+          <>
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="mb-2 block text-sm font-medium text-slate-700"
+                >
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={event => setEmail(event.target.value)}
+                  required
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-black outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  placeholder="Enter your email"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-2 block text-sm font-medium text-slate-700"
+                >
+                  Password
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={event => setPassword(event.target.value)}
+                  required
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-black outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  placeholder="Enter your password"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full rounded-xl bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Login
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCreateAccount}
+                className="w-full rounded-xl bg-slate-100 px-4 py-3 font-medium text-slate-700 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+              >
+                Create Account
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm font-medium text-blue-600 transition hover:text-blue-800 focus:outline-none focus:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
