@@ -60,7 +60,7 @@ export class HttpClient {
     this.defaultTtlMs = options?.defaultTtlMs ?? DEFAULT_TTL_MS;
   }
 
-  async request<T>(
+  request<T>(
     url: string,
     options?: HttpRequestOptions,
   ): Promise<ApiResponse<T>> {
@@ -73,7 +73,7 @@ export class HttpClient {
     if (useCache) {
       const cached = this.getFromCache<ApiResponse<T>>(key);
       if (cached !== null) {
-        return cached;
+        return Promise.resolve(cached);
       }
     }
 
@@ -82,23 +82,31 @@ export class HttpClient {
       if (existing) {
         return existing as Promise<ApiResponse<T>>;
       }
-    }
 
-    const requestPromise = this.executeRequestWithRetry<T>(
-      url,
-      options,
-      useCache,
-      ttlMs,
-      key,
-    ).finally(() => {
-      this.inFlight.delete(key);
-    });
+      // Create an async IIFE that handles the request
+      const requestPromise = (async (): Promise<ApiResponse<T>> => {
+        try {
+          const result = await this.executeRequestWithRetry<T>(
+            url,
+            options,
+            useCache,
+            ttlMs,
+            key,
+          );
+          return result;
+        } finally {
+          this.inFlight.delete(key);
+        }
+      })();
 
-    if (dedupe) {
+      // Store in inFlight BEFORE the async work completes
       this.inFlight.set(key, requestPromise);
+
+      return requestPromise;
     }
 
-    return requestPromise;
+    // Non-deduped path
+    return this.executeRequestWithRetry<T>(url, options, useCache, ttlMs, key);
   }
 
   get<T>(
