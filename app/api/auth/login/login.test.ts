@@ -64,15 +64,15 @@ describe('Login Endpoint', () => {
     expect(response.status).toBe(200);
 
     const body = await response.json();
-    expect(body.user).toBeDefined();
-    expect(body.user.email).toBe(testUser.email);
-    expect(body.user.id).toBe(testUser.id);
-    expect(body.user.passwordHash).toBeUndefined();
+    expect(body.data.user).toBeDefined();
+    expect(body.data.user.email).toBe(testUser.email);
+    expect(body.data.user.id).toBe(testUser.id);
+    expect(body.data.user.passwordHash).toBeUndefined();
 
-    expect(body.tokens).toBeDefined();
-    expect(body.tokens.accessToken).toBeDefined();
-    expect(body.tokens.refreshToken).toBeDefined();
-    expect(body.tokens.expiresIn).toBe(1800);
+    expect(body.data.tokens).toBeDefined();
+    expect(body.data.tokens.accessToken).toBeDefined();
+    expect(body.data.tokens.refreshToken).toBeDefined();
+    expect(body.data.tokens.expiresIn).toBe(1800);
   });
 
   it('should login with username (email)', async () => {
@@ -87,8 +87,8 @@ describe('Login Endpoint', () => {
     expect(response.status).toBe(200);
 
     const body = await response.json();
-    expect(body.user.email).toBe(testUser.email);
-    expect(body.tokens).toBeDefined();
+    expect(body.data.user.email).toBe(testUser.email);
+    expect(body.data.tokens).toBeDefined();
   });
 
   it('should return 400 when password is missing', async () => {
