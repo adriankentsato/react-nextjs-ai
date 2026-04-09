@@ -33,6 +33,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const identifier = email || username;
+    if (!identifier) {
+      return NextResponse.json(
+        { error: 'Username or email is required' },
+        { status: 400 },
+      );
+    }
+
     const user = getUserByEmail(identifier);
 
     if (!user) {
