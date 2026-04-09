@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken, TokenPayload } from './token-service';
+import { ApiRequest, ErrorResponse } from './api-handler';
 
 export interface AuthenticatedRequest extends NextRequest {
+  user?: TokenPayload;
+}
+
+export interface ApiAuthenticatedRequest extends ApiRequest {
   user?: TokenPayload;
 }
 
@@ -54,4 +59,21 @@ export function withAuth(
 
     return handler(authenticatedRequest, authResult.user);
   };
+}
+
+export function apiAuthMiddleware(request: ApiAuthenticatedRequest): void {
+  const authHeader = request.headers.get('authorization');
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw ErrorResponse.unauthorized('Authorization header missing or invalid');
+  }
+
+  const token = authHeader.substring(7);
+  const payload = verifyAccessToken(token);
+
+  if (!payload) {
+    throw ErrorResponse.unauthorized('Invalid or expired token');
+  }
+
+  request.user = payload;
 }
