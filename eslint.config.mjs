@@ -39,6 +39,12 @@ const eslintConfig = [
         Response: 'readonly',
         Request: 'readonly',
         Headers: 'readonly',
+        Event: 'readonly',
+        MouseEvent: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLFormElement: 'readonly',
+        HTMLInputElement: 'readonly',
 
         // React
         React: 'readonly',
@@ -61,6 +67,11 @@ const eslintConfig = [
         IDBCursor: 'readonly',
         IDBValidKey: 'readonly',
         IDBIndexParameters: 'readonly',
+
+        // DOM types
+        RequestInit: 'readonly',
+        HeadersInit: 'readonly',
+        URL: 'readonly',
       },
     },
     plugins: {
