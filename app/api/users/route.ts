@@ -1,57 +1,56 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createUser, getAllUsers, CreateUserInput } from '@/app/lib/database';
-import { authenticateRequest } from '@/app/lib/auth-middleware';
+import {
+  apiHandler,
+  SuccessResponse,
+  ErrorResponse,
+} from '@/app/lib/api-handler';
+import {
+  apiAuthMiddleware,
+  ApiAuthenticatedRequest,
+} from '@/app/lib/auth-middleware';
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
-  const authResult = authenticateRequest(request);
-  if (authResult.response) {
-    return authResult.response;
-  }
-
+async function getUsersHandler(): Promise<SuccessResponse> {
   try {
     const users = getAllUsers();
     const safeUsers = users.map(user => {
       const { passwordHash: _passwordHash, ...safeUser } = user;
       return safeUser;
     });
-    return NextResponse.json({ users: safeUsers });
-  } catch (_error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch users' },
-      { status: 500 },
-    );
+    return SuccessResponse.ok({ users: safeUsers });
+  } catch (error) {
+    if (error instanceof ErrorResponse) {
+      throw error;
+    }
+    throw ErrorResponse.internalServerError('Failed to fetch users');
   }
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
-  const authResult = authenticateRequest(request);
-  if (authResult.response) {
-    return authResult.response;
+async function createUserHandler(
+  request: ApiAuthenticatedRequest,
+): Promise<SuccessResponse> {
+  const body = (await request.json()) as CreateUserInput;
+
+  if (!body.firstName || !body.lastName || !body.email || !body.password) {
+    throw ErrorResponse.badRequest(
+      'firstName, lastName, email, and password are required',
+    );
   }
 
   try {
-    const body = (await request.json()) as CreateUserInput;
-
-    if (!body.firstName || !body.lastName || !body.email || !body.password) {
-      return NextResponse.json(
-        { error: 'firstName, lastName, email, and password are required' },
-        { status: 400 },
-      );
-    }
-
     const user = createUser(body);
     const { passwordHash: _passwordHash, ...safeUser } = user;
-    return NextResponse.json({ user: safeUser }, { status: 201 });
-  } catch (_error) {
-    if ((_error as Error).message.includes('UNIQUE constraint failed')) {
-      return NextResponse.json(
-        { error: 'Email already exists' },
-        { status: 409 },
-      );
+    return SuccessResponse.created({ user: safeUser });
+  } catch (error) {
+    if ((error as Error).message.includes('UNIQUE constraint failed')) {
+      throw ErrorResponse.conflict('Email already exists');
     }
-    return NextResponse.json(
-      { error: 'Failed to create user' },
-      { status: 500 },
-    );
+    throw ErrorResponse.internalServerError('Failed to create user');
   }
 }
+
+export const GET = (request: NextRequest) =>
+  apiHandler([apiAuthMiddleware, getUsersHandler])(request);
+
+export const POST = (request: NextRequest) =>
+  apiHandler([apiAuthMiddleware, createUserHandler])(request);

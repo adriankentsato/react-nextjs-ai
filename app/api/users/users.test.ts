@@ -77,12 +77,12 @@ describe('Users API - List and Create', () => {
       expect(response.status).toBe(200);
 
       const body = await response.json();
-      expect(body.users).toBeDefined();
-      expect(Array.isArray(body.users)).toBe(true);
-      expect(body.users.length).toBeGreaterThan(0);
+      expect(body.data.users).toBeDefined();
+      expect(Array.isArray(body.data.users)).toBe(true);
+      expect(body.data.users.length).toBeGreaterThan(0);
 
       // Check that passwordHash is not exposed
-      const user = body.users.find((u: User) => u.id === testUser.id);
+      const user = body.data.users.find((u: User) => u.id === testUser.id);
       expect(user).toBeDefined();
       expect(user.passwordHash).toBeUndefined();
     });
@@ -132,11 +132,11 @@ describe('Users API - List and Create', () => {
       expect(response.status).toBe(201);
 
       const body = await response.json();
-      expect(body.user).toBeDefined();
-      expect(body.user.firstName).toBe(newUser.firstName);
-      expect(body.user.lastName).toBe(newUser.lastName);
-      expect(body.user.email).toBe(newUser.email);
-      expect(body.user.passwordHash).toBeUndefined();
+      expect(body.data.user).toBeDefined();
+      expect(body.data.user.firstName).toBe(newUser.firstName);
+      expect(body.data.user.lastName).toBe(newUser.lastName);
+      expect(body.data.user.email).toBe(newUser.email);
+      expect(body.data.user.passwordHash).toBeUndefined();
     });
 
     it('should return 400 when required fields are missing', async () => {
@@ -186,21 +186,27 @@ describe('Users API - List and Create', () => {
     });
 
     it('should return 500 for internal server error', async () => {
-      // Create a request with invalid JSON to trigger error
-      const headers = new Headers();
-      headers.set('authorization', `Bearer ${authToken}`);
+      const createUserSpy = vi
+        .spyOn(databaseModule, 'createUser')
+        .mockImplementation(() => {
+          throw new Error('Database error');
+        });
 
-      const request = new Request('http://localhost:3000/api/users', {
-        method: 'POST',
-        headers: Object.fromEntries(headers.entries()),
-        body: 'invalid-json{',
-      }) as unknown as import('next/server').NextRequest;
+      const newUser = {
+        firstName: 'Error',
+        lastName: 'Test',
+        email: 'error.test@example.com',
+        password: 'password123',
+      };
 
+      const request = createAuthRequest('POST', newUser);
       const response = await POST(request);
       expect(response.status).toBe(500);
 
       const body = await response.json();
       expect(body.error).toBe('Failed to create user');
+
+      createUserSpy.mockRestore();
     });
   });
 });

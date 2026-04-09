@@ -80,10 +80,10 @@ describe('Users API - Single User Operations', () => {
       expect(response.status).toBe(200);
 
       const body = await response.json();
-      expect(body.user).toBeDefined();
-      expect(body.user.id).toBe(testUser.id);
-      expect(body.user.email).toBe(testUser.email);
-      expect(body.user.passwordHash).toBeUndefined();
+      expect(body.data.user).toBeDefined();
+      expect(body.data.user.id).toBe(testUser.id);
+      expect(body.data.user.email).toBe(testUser.email);
+      expect(body.data.user.passwordHash).toBeUndefined();
     });
 
     it('should return 404 for non-existent user', async () => {
@@ -149,11 +149,11 @@ describe('Users API - Single User Operations', () => {
       expect(response.status).toBe(200);
 
       const body = await response.json();
-      expect(body.user).toBeDefined();
-      expect(body.user.firstName).toBe(updateData.firstName);
-      expect(body.user.lastName).toBe(updateData.lastName);
-      expect(body.user.fullName).toBe('Updated Name');
-      expect(body.user.passwordHash).toBeUndefined();
+      expect(body.data.user).toBeDefined();
+      expect(body.data.user.firstName).toBe(updateData.firstName);
+      expect(body.data.user.lastName).toBe(updateData.lastName);
+      expect(body.data.user.fullName).toBe('Updated Name');
+      expect(body.data.user.passwordHash).toBeUndefined();
     });
 
     it('should return 404 for non-existent user', async () => {
@@ -246,7 +246,7 @@ describe('Users API - Single User Operations', () => {
       expect(response.status).toBe(200);
 
       const body = await response.json();
-      expect(body.success).toBe(true);
+      expect(body.data.success).toBe(true);
     });
 
     it('should return 404 for non-existent user', async () => {

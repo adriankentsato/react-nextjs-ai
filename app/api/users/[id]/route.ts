@@ -1,100 +1,118 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import {
   getUserById,
   updateUser,
   deleteUser,
   UpdateUserInput,
 } from '@/app/lib/database';
-import { authenticateRequest } from '@/app/lib/auth-middleware';
+import {
+  apiHandler,
+  SuccessResponse,
+  ErrorResponse,
+} from '@/app/lib/api-handler';
+import {
+  apiAuthMiddleware,
+  ApiAuthenticatedRequest,
+} from '@/app/lib/auth-middleware';
 
 interface Params {
   id: string;
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<Params> },
-): Promise<NextResponse> {
-  const authResult = authenticateRequest(request);
-  if (authResult.response) {
-    return authResult.response;
-  }
-
-  try {
-    const { id } = await params;
-    const user = getUserById(id);
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    const { passwordHash: _passwordHash, ...safeUser } = user;
-    return NextResponse.json({ user: safeUser });
-  } catch (_error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch user' },
-      { status: 500 },
-    );
-  }
+interface HandlerRequest extends ApiAuthenticatedRequest {
+  params?: Params;
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<Params> },
-): Promise<NextResponse> {
-  const authResult = authenticateRequest(request);
-  if (authResult.response) {
-    return authResult.response;
-  }
+function createGetUserHandler(paramsPromise: Promise<Params>) {
+  return async function getUserHandler(
+    request: HandlerRequest,
+  ): Promise<SuccessResponse> {
+    const { id } = await paramsPromise;
+    request.params = { id };
 
-  try {
-    const { id } = await params;
+    try {
+      const user = getUserById(id);
+
+      if (!user) {
+        throw ErrorResponse.notFound('User not found');
+      }
+
+      const { passwordHash: _passwordHash, ...safeUser } = user;
+      return SuccessResponse.ok({ user: safeUser });
+    } catch (error) {
+      if (error instanceof ErrorResponse) {
+        throw error;
+      }
+      throw ErrorResponse.internalServerError('Failed to fetch user');
+    }
+  };
+}
+
+function createUpdateUserHandler(paramsPromise: Promise<Params>) {
+  return async function updateUserHandler(
+    request: HandlerRequest,
+  ): Promise<SuccessResponse> {
+    const { id } = await paramsPromise;
+    request.params = { id };
+
     const body = (await request.json()) as UpdateUserInput;
 
-    const user = updateUser(id, body);
+    try {
+      const user = updateUser(id, body);
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+      if (!user) {
+        throw ErrorResponse.notFound('User not found');
+      }
 
-    const { passwordHash: _passwordHash, ...safeUser } = user;
-    return NextResponse.json({ user: safeUser });
-  } catch (_error) {
-    if ((_error as Error).message.includes('UNIQUE constraint failed')) {
-      return NextResponse.json(
-        { error: 'Email already exists' },
-        { status: 409 },
-      );
+      const { passwordHash: _passwordHash, ...safeUser } = user;
+      return SuccessResponse.ok({ user: safeUser });
+    } catch (error) {
+      if (error instanceof ErrorResponse) {
+        throw error;
+      }
+      if ((error as Error).message.includes('UNIQUE constraint failed')) {
+        throw ErrorResponse.conflict('Email already exists');
+      }
+      throw ErrorResponse.internalServerError('Failed to update user');
     }
-    return NextResponse.json(
-      { error: 'Failed to update user' },
-      { status: 500 },
-    );
-  }
+  };
 }
 
-export async function DELETE(
+function createDeleteUserHandler(paramsPromise: Promise<Params>) {
+  return async function deleteUserHandler(
+    request: HandlerRequest,
+  ): Promise<SuccessResponse> {
+    const { id } = await paramsPromise;
+    request.params = { id };
+
+    try {
+      const deleted = deleteUser(id);
+
+      if (!deleted) {
+        throw ErrorResponse.notFound('User not found');
+      }
+
+      return SuccessResponse.ok({ success: true });
+    } catch (error) {
+      if (error instanceof ErrorResponse) {
+        throw error;
+      }
+      throw ErrorResponse.internalServerError('Failed to delete user');
+    }
+  };
+}
+
+export const GET = (
   request: NextRequest,
   { params }: { params: Promise<Params> },
-): Promise<NextResponse> {
-  const authResult = authenticateRequest(request);
-  if (authResult.response) {
-    return authResult.response;
-  }
+) => apiHandler([apiAuthMiddleware, createGetUserHandler(params)])(request);
 
-  try {
-    const { id } = await params;
-    const deleted = deleteUser(id);
+export const PUT = (
+  request: NextRequest,
+  { params }: { params: Promise<Params> },
+) => apiHandler([apiAuthMiddleware, createUpdateUserHandler(params)])(request);
 
-    if (!deleted) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (_error) {
-    return NextResponse.json(
-      { error: 'Failed to delete user' },
-      { status: 500 },
-    );
-  }
-}
+export const DELETE = (
+  request: NextRequest,
+  { params }: { params: Promise<Params> },
+) => apiHandler([apiAuthMiddleware, createDeleteUserHandler(params)])(request);
