@@ -68,10 +68,10 @@ describe('Refresh Token Endpoint', () => {
     expect(response.status).toBe(200);
 
     const body = await response.json();
-    expect(body.tokens).toBeDefined();
-    expect(body.tokens.accessToken).toBeDefined();
-    expect(body.tokens.refreshToken).toBeDefined();
-    expect(body.tokens.expiresIn).toBe(1800);
+    expect(body.data.tokens).toBeDefined();
+    expect(body.data.tokens.accessToken).toBeDefined();
+    expect(body.data.tokens.refreshToken).toBeDefined();
+    expect(body.data.tokens.expiresIn).toBe(1800);
   });
 
   it('should return 400 when refresh token is missing', async () => {

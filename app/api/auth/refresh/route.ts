@@ -1,39 +1,35 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { refreshTokens } from '@/app/lib/token-service';
+import {
+  apiHandler,
+  ApiRequest,
+  SuccessResponse,
+  ErrorResponse,
+} from '@/app/lib/api-handler';
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
-  try {
-    const body = (await request.json()) as { refreshToken?: string };
+async function refreshHandler(request: ApiRequest): Promise<SuccessResponse> {
+  const body = (await request.json()) as { refreshToken?: string };
 
-    const { refreshToken } = body;
+  const { refreshToken } = body;
 
-    if (!refreshToken) {
-      return NextResponse.json(
-        { error: 'Refresh token is required' },
-        { status: 400 },
-      );
-    }
-
-    const tokens = refreshTokens(refreshToken);
-
-    if (!tokens) {
-      return NextResponse.json(
-        { error: 'Invalid or expired refresh token' },
-        { status: 401 },
-      );
-    }
-
-    return NextResponse.json({
-      tokens: {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-        expiresIn: tokens.expiresIn,
-      },
-    });
-  } catch (_error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
-    );
+  if (!refreshToken) {
+    throw ErrorResponse.badRequest('Refresh token is required');
   }
+
+  const tokens = refreshTokens(refreshToken);
+
+  if (!tokens) {
+    throw ErrorResponse.unauthorized('Invalid or expired refresh token');
+  }
+
+  return SuccessResponse.ok({
+    tokens: {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
+    },
+  });
 }
+
+export const POST = (request: NextRequest) =>
+  apiHandler([refreshHandler])(request);
