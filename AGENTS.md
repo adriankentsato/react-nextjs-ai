@@ -58,3 +58,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Prioritize token efficiency while maintaining clarity and accuracy
 
 <!-- END:global-software-engineer-rules -->
+
+<!-- BEGIN:available-workflows -->
+
+# Available Workflows
+
+The following slash-command workflows are available in `.windsurf/workflows/`:
+
+| Workflow | File | Purpose |
+|----------|------|---------|
+| `/commit-plan` | `commit-plan.md` | Human-oriented commit planning and staging |
+| `/ai-commit-plan` | `ai-commit-plan.md` | AI-agnostic commit planning protocol |
+
+When asked to create commits or analyze changes, check these workflows first and follow their protocols.
+
+<!-- END:available-workflows -->
