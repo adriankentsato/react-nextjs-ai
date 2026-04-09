@@ -119,6 +119,7 @@ describe('HttpClient', () => {
   });
 
   it('does not cache failed responses', async () => {
+    // First request: fails after all retries (3 attempts), second request: succeeds
     const fetchFn = vi
       .fn()
       .mockResolvedValueOnce(
@@ -126,7 +127,31 @@ describe('HttpClient', () => {
           {
             data: null,
             pagination: null,
-            processId: 'proc-err',
+            processId: 'proc-err-1',
+            message: 'Server error',
+            errors: [{ type: 'server', message: 'Server error' }],
+          },
+          { ok: false, status: 500 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse(
+          {
+            data: null,
+            pagination: null,
+            processId: 'proc-err-2',
+            message: 'Server error',
+            errors: [{ type: 'server', message: 'Server error' }],
+          },
+          { ok: false, status: 500 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse(
+          {
+            data: null,
+            pagination: null,
+            processId: 'proc-err-3',
             message: 'Server error',
             errors: [{ type: 'server', message: 'Server error' }],
           },
@@ -149,7 +174,7 @@ describe('HttpClient', () => {
 
     const second = await client.get<{ value: number }>('/api/errors');
     expect(second.data.value).toBe(2);
-    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(fetchFn).toHaveBeenCalledTimes(4);
   });
 
   it('retries twice before failing for retryable errors', async () => {
@@ -270,6 +295,8 @@ describe('HttpClient', () => {
   });
 
   it('does not cache partial pagination result if a later page fails', async () => {
+    // First getAllPages: page 1 succeeds, page 2 fails after 3 retry attempts
+    // Second getAllPages: page 1 succeeds, page 2 succeeds
     const fetchFn = vi
       .fn()
       .mockResolvedValueOnce(
@@ -281,12 +308,13 @@ describe('HttpClient', () => {
           errors: null,
         }),
       )
+      // Page 2: fails 3 times (initial + 2 retries)
       .mockResolvedValueOnce(
         createJsonResponse(
           {
             data: null,
             pagination: null,
-            processId: 'proc-err',
+            processId: 'proc-err-1',
             message: 'Server error',
             errors: [{ type: 'server', message: 'Server error' }],
           },
@@ -294,10 +322,44 @@ describe('HttpClient', () => {
         ),
       )
       .mockResolvedValueOnce(
+        createJsonResponse(
+          {
+            data: null,
+            pagination: null,
+            processId: 'proc-err-2',
+            message: 'Server error',
+            errors: [{ type: 'server', message: 'Server error' }],
+          },
+          { ok: false, status: 500 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse(
+          {
+            data: null,
+            pagination: null,
+            processId: 'proc-err-3',
+            message: 'Server error',
+            errors: [{ type: 'server', message: 'Server error' }],
+          },
+          { ok: false, status: 500 },
+        ),
+      )
+      // Second getAllPages calls: page 1 and page 2 both succeed
+      .mockResolvedValueOnce(
         createJsonResponse({
           data: [{ id: 1 }, { id: 2 }],
-          pagination: { page: 1, total: 1 },
-          processId: 'proc-3',
+          pagination: { page: 1, total: 2 },
+          processId: 'proc-4',
+          message: 'ok',
+          errors: null,
+        }),
+      )
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          data: [{ id: 3 }],
+          pagination: { page: 2, total: 2 },
+          processId: 'proc-5',
           message: 'ok',
           errors: null,
         }),
@@ -315,12 +377,14 @@ describe('HttpClient', () => {
       useCache: false,
       dedupe: false,
     });
-    expect(fetchFn).toHaveBeenNthCalledWith(5, '/api/users?page=1', {
+    // 6th call is page 2 of second getAllPages (first getAllPages has: page1, page2 x3 retries; second has: page1, page2)
+    expect(fetchFn).toHaveBeenNthCalledWith(6, '/api/users?page=2', {
       method: 'GET',
       useCache: false,
       dedupe: false,
     });
-    expect(fetchFn).toHaveBeenCalledTimes(5);
+    // 6 total: first getAllPages (page1 + page2x3 retries) + second getAllPages (page1 + page2)
+    expect(fetchFn).toHaveBeenCalledTimes(6);
   });
 
   it('returns error messages from API error payload', async () => {
