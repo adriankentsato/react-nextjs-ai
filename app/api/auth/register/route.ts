@@ -11,8 +11,24 @@ import {
   SuccessResponse,
   ErrorResponse,
 } from '@/app/lib/api-handler';
+import { checkRateLimit, getClientIp } from '@/app/lib/rate-limiter';
+
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 async function registerHandler(request: ApiRequest): Promise<SuccessResponse> {
+  const clientIp = getClientIp(request);
+  const rateLimitResult = checkRateLimit(`register:${clientIp}`, {
+    maxRequests: RATE_LIMIT_MAX,
+    windowMs: RATE_LIMIT_WINDOW_MS,
+  });
+
+  if (!rateLimitResult.allowed) {
+    throw ErrorResponse.tooManyRequests(
+      `Rate limit exceeded. Try again after ${new Date(rateLimitResult.resetTime).toISOString()}`,
+    );
+  }
+
   const body = (await request.json()) as CreateUserInput & {
     confirmPassword?: string;
   };
