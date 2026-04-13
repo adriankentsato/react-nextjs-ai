@@ -133,4 +133,11 @@ export class ErrorResponse extends ApiResponse {
       errorMessages,
     );
   }
+
+  static tooManyRequests(
+    message: string = 'Too Many Requests',
+    errorMessages: ErrorMessage[] = [],
+  ) {
+    return new ErrorResponse(message, 'TOO_MANY_REQUESTS', 429, errorMessages);
+  }
 }
